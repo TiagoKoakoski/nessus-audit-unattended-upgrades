@@ -13,7 +13,7 @@ if (description)
   script_set_attribute(attribute:"risk_factor", value:"None");
 
   script_category(ACT_GATHER_INFO);
-  script_family(english:"General");
+  script_family(english:"Custom Plugins");
   script_copyright(english:"Copyright (C) 2026 Internal");
 
   exit(0);

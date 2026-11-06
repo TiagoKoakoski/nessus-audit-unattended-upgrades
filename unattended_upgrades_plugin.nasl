@@ -48,7 +48,7 @@ and confirm via logs/journal that it has run recently.");
   script_set_attribute(attribute:"plugin_type", value:"local");
 
   script_category(ACT_GATHER_INFO);
-  script_family(english:"General");
+  script_family(english:"Custom Plugins");
   script_copyright(english:"Copyright (C) 2026 Internal");
 
   script_dependencies("ssh_get_info.nasl");
