@@ -1,5 +1,5 @@
-<check_type:"Unix" version:"2">
-<group_policy:"Unattended Upgrades - deteccao automatica de SO">
+<check_type: "Unix" version:"2">
+<group_policy: "Unattended Upgrades - deteccao automatica de SO">
 
 <if>
 <condition type:"or">
