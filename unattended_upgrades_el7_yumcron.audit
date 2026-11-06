@@ -28,7 +28,7 @@
 <custom_item>
   type        : CMD_EXEC
   description : "yum-cron actually ran in the last 30 days"
-  cmd         : "test \"$(journalctl -u yum-cron --since '-30 days' --no-pager 2>/dev/null | wc -l)\" -gt 0 && echo RECENT_RUN_FOUND || echo NO_RECENT_RUN"
+  cmd         : "journalctl -u yum-cron --since '-30 days' --no-pager 2>/dev/null | grep -q . && echo RECENT_RUN_FOUND || echo NO_RECENT_RUN"
   expect      : "RECENT_RUN_FOUND"
 </custom_item>
 

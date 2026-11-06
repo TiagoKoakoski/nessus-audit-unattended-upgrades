@@ -11,10 +11,10 @@
 <custom_item>
   type        : CMD_EXEC
   description : "Automatic unattended upgrades are enabled in APT periodic config"
-  info        : "Confere /etc/apt/apt.conf.d/20auto-upgrades -- precisa ter APT::Periodic::Unattended-Upgrade com valor \"1\" (um numero de dias, == habilitado todo dia) ou \"always\" (valor aceito em versoes mais novas do unattended-upgrades, visto em teste real em 2026-11-06 no host host-debian-teste -- \"0\" desabilita)."
+  info        : "Confere /etc/apt/apt.conf.d/20auto-upgrades -- precisa ter APT::Periodic::Unattended-Upgrade com valor 1 (um numero de dias, == habilitado todo dia) ou always (valor aceito em versoes mais novas do unattended-upgrades, visto em teste real em 2026-11-06 no host host-debian-teste -- 0 desabilita)."
   cmd         : "cat /etc/apt/apt.conf.d/20auto-upgrades 2>/dev/null"
   regex       : "APT::Periodic::Unattended-Upgrade"
-  expect      : "\"1\";|\"always\";"
+  expect      : "1;|always;"
 </custom_item>
 
 <custom_item>

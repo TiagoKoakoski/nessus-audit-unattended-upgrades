@@ -11,7 +11,30 @@ na própria sintaxe `<if>/<condition>/<then>/<else>`** — que a doc
 oficial documenta, mas essa engine aparentemente não suporta (ou tem
 um bug nela).
 
-**Use em vez disso os 3 arquivos separados por SO**, sem lógica
+**Atualização (2026-11-06, segunda rodada):** mesmo sem o `<if>`, os 3
+arquivos separados bateram de novo em **"Unrecognized grammar"** —
+porque os `custom_item` que ficavam dentro do `<then>`/`<else>` nunca
+tinham sido realmente testados antes (o parser já falhava no `<if>`
+antes de chegar neles). Causa encontrada: campos `expect`/`info`/`cmd`
+com **aspas duplas escapadas (`\"`)** dentro do valor entre aspas —
+essa engine aparentemente não suporta esse escape, e a primeira `"`
+literal fecha o campo prematuramente, quebrando o parsing. Tinha em
+dois lugares:
+- `unattended_upgrades_debian.audit`: campo `expect`/`info` do item de
+  `APT::Periodic::Unattended-Upgrade` usava `\"1\"`/`\"always\"` —
+  trocado para `1;|always;` sem aspas.
+- `unattended_upgrades_el7_yumcron.audit` e
+  `unattended_upgrades_el8plus_dnfautomatic.audit`: o `cmd` do check de
+  "rodou nos últimos 30 dias" usava `test \"$(journalctl ...)\" -gt 0`
+  (aspas do shell escapadas pra DSL) — trocado pra
+  `journalctl ... | grep -q .` (mesma lógica, sem precisar de aspas
+  escapadas).
+
+Lição: qualquer aspas dupla que precise aparecer *dentro* de um campo
+`cmd`/`regex`/`expect`/`info` (seja da sintaxe do shell ou texto livre)
+deve ser evitada ou reescrita sem escape — essa engine não aceita `\"`.
+
+**Use os 3 arquivos separados por SO**, sem lógica
 condicional nenhuma (só lista sequencial de `custom_item`, formato que
 sabemos que essa engine aceita):
 

@@ -37,7 +37,7 @@
   type        : CMD_EXEC
   description : "dnf-automatic actually ran in the last 30 days"
   info        : "ATENCAO: se o journal for volatil ou tiver retencao curta, este item pode dar falso negativo -- conferir /etc/systemd/journald.conf se bater FAILED aqui com os demais passando."
-  cmd         : "test \"$(journalctl -u dnf-automatic-install.service -u dnf-automatic.service --since '-30 days' --no-pager 2>/dev/null | wc -l)\" -gt 0 && echo RECENT_RUN_FOUND || echo NO_RECENT_RUN"
+  cmd         : "journalctl -u dnf-automatic-install.service -u dnf-automatic.service --since '-30 days' --no-pager 2>/dev/null | grep -q . && echo RECENT_RUN_FOUND || echo NO_RECENT_RUN"
   expect      : "RECENT_RUN_FOUND"
 </custom_item>
 
