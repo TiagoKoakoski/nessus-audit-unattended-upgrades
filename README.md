@@ -169,6 +169,13 @@ Depois: **Plugins → Upload Custom Plugins** → selecionar o
 `upload_this.tar.gz` → `Submit`. O timestamp do `custom_feed_info.inc`
 vence rápido — se demorar pra subir, gera de novo.
 
+**`upload_this.tar.gz` e `upload_test_minimal.tar.gz` estão versionados
+no repo só como conveniência** (pra não precisar rodar os comandos de
+novo na hora) — mas o `PLUGIN_SET` lá dentro é um timestamp fixo que
+vence em minutos. Se já faz tempo desde o commit, **regenera antes de
+usar** com os comandos acima (passos 1-3), não tenta subir o arquivo
+baixado direto do GitHub sem checar a data.
+
 **Validar o resultado** em **System Logs** (não confiar só no toast
 "Uploaded Successfully" — ele só confirma que o arquivo chegou, não que
 o NASL foi aceito):

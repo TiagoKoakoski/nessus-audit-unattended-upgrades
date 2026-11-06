@@ -1,5 +1,4 @@
-# artefatos de build/upload (gerados a partir dos arquivos fonte, nao versionados)
+# artefatos intermediarios do build (os .tar.gz finais SAO versionados,
+# mas regenerar sempre que o custom_feed_info.inc estiver vencido -- ver README)
 custom_feed_info.inc
 custom_nasl_archive.tar.gz
-upload_this.tar.gz
-upload_test_minimal.tar.gz
