@@ -1,0 +1,5 @@
+# artefatos de build/upload (gerados a partir dos arquivos fonte, nao versionados)
+custom_feed_info.inc
+custom_nasl_archive.tar.gz
+upload_this.tar.gz
+upload_test_minimal.tar.gz

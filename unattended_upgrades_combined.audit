@@ -1,0 +1,173 @@
+<check_type:"Unix" version:"2">
+<group_policy:"Unattended Upgrades - deteccao automatica de SO">
+
+<if>
+<condition type:"or">
+  <custom_item>
+    type        : CMD_EXEC
+    description : "(deteccao silenciosa) e Debian/Ubuntu"
+    cmd         : "cat /etc/os-release 2>/dev/null"
+    regex       : "^ID="
+    expect      : "ID=debian|ID=ubuntu"
+  </custom_item>
+</condition>
+
+<then>
+  <!-- ===== Debian / Ubuntu — unattended-upgrades ===== -->
+
+  <custom_item>
+    type        : CMD_EXEC
+    description : "unattended-upgrades package is installed"
+    info        : "Verifica se o pacote unattended-upgrades esta instalado via dpkg."
+    cmd         : "dpkg-query -W -f='${Status}\n' unattended-upgrades 2>/dev/null"
+    expect      : "install ok installed"
+  </custom_item>
+
+  <custom_item>
+    type        : CMD_EXEC
+    description : "Automatic unattended upgrades are enabled in APT periodic config"
+    info        : "Confere /etc/apt/apt.conf.d/20auto-upgrades -- precisa ter APT::Periodic::Unattended-Upgrade com valor \"1\" (um numero de dias, == habilitado todo dia) ou \"always\" (valor aceito em versoes mais novas do unattended-upgrades, visto em teste real em 2026-11-06 no host host-debian-teste -- \"0\" desabilita)."
+    cmd         : "cat /etc/apt/apt.conf.d/20auto-upgrades 2>/dev/null"
+    regex       : "APT::Periodic::Unattended-Upgrade"
+    expect      : "\"1\";|\"always\";"
+  </custom_item>
+
+  <custom_item>
+    type        : CMD_EXEC
+    description : "apt-daily-upgrade.timer is enabled"
+    cmd         : "if systemctl is-enabled apt-daily-upgrade.timer 2>/dev/null | grep -qx enabled; then echo TIMER_ENABLED; else echo TIMER_NOT_ENABLED; fi"
+    expect      : "TIMER_ENABLED"
+  </custom_item>
+
+  <custom_item>
+    type        : CMD_EXEC
+    description : "apt-daily-upgrade.timer is active"
+    info        : "Usa 'grep -qx active' (match exato da linha) em vez de so procurar a palavra 'active' na saida -- 'inactive' CONTEM 'active' como substring, entao um expect ingenuo dava PASSED errado mesmo com o timer inativo (achado em teste real em 2026-11-06, host host-rocky-teste, comparando com o resultado do dnf-automatic-install.timer)."
+    cmd         : "if systemctl is-active apt-daily-upgrade.timer 2>/dev/null | grep -qx active; then echo TIMER_ACTIVE; else echo TIMER_NOT_ACTIVE; fi"
+    expect      : "TIMER_ACTIVE"
+  </custom_item>
+
+  <custom_item>
+    type        : CMD_EXEC
+    description : "unattended-upgrades actually ran in the last 30 days"
+    info        : "Evidencia real de execucao, nao so configuracao."
+    cmd         : "find /var/log/unattended-upgrades/unattended-upgrades.log -mtime -30 2>/dev/null"
+    expect      : "unattended-upgrades.log"
+  </custom_item>
+</then>
+
+<else>
+  <if>
+  <condition type:"or">
+    <custom_item>
+      type        : CMD_EXEC
+      description : "(deteccao silenciosa) e familia RHEL/CentOS"
+      cmd         : "test -f /etc/redhat-release && echo REDHAT_FAMILY_FOUND || echo REDHAT_FAMILY_NOT_FOUND"
+      expect      : "REDHAT_FAMILY_FOUND"
+    </custom_item>
+  </condition>
+
+  <then>
+    <if>
+    <condition type:"or">
+      <custom_item>
+        type        : CMD_EXEC
+        description : "(deteccao silenciosa) e EL7 (legado, usa yum-cron)"
+        cmd         : "cat /etc/os-release 2>/dev/null"
+        regex       : "^VERSION_ID="
+        expect      : "VERSION_ID=\"7"
+      </custom_item>
+    </condition>
+
+    <then>
+      <!-- ===== RHEL/CentOS 7 — yum-cron (legado, EOL) ===== -->
+
+      <custom_item>
+        type        : CMD_EXEC
+        description : "yum-cron package is installed"
+        cmd         : "rpm -q --quiet yum-cron && echo PKG_PRESENT || echo PKG_ABSENT"
+        expect      : "PKG_PRESENT"
+      </custom_item>
+
+      <custom_item>
+        type        : CMD_EXEC
+        description : "yum-cron is configured to download AND apply updates"
+        info        : "Confere /etc/yum/yum-cron.conf -- precisa ter download_updates = yes e apply_updates = yes."
+        cmd         : "cat /etc/yum/yum-cron.conf 2>/dev/null"
+        regex       : "^\\s*(download_updates|apply_updates)\\s*="
+        expect      : "download_updates = yes|apply_updates = yes"
+        match_all   : YES
+      </custom_item>
+
+      <custom_item>
+        type        : CMD_EXEC
+        description : "yum-cron is enabled to run (service or cron script)"
+        cmd         : "if systemctl is-enabled yum-cron 2>/dev/null | grep -qx enabled; then echo YUMCRON_ENABLED; elif test -x /etc/cron.daily/0yum-daily.cron; then echo YUMCRON_ENABLED; else echo YUMCRON_NOT_ENABLED; fi"
+        expect      : "YUMCRON_ENABLED"
+      </custom_item>
+
+      <custom_item>
+        type        : CMD_EXEC
+        description : "yum-cron actually ran in the last 30 days"
+        cmd         : "test \"$(journalctl -u yum-cron --since '-30 days' --no-pager 2>/dev/null | wc -l)\" -gt 0 && echo RECENT_RUN_FOUND || echo NO_RECENT_RUN"
+        expect      : "RECENT_RUN_FOUND"
+      </custom_item>
+    </then>
+
+    <else>
+      <!-- ===== RHEL/CentOS 8+/Stream/Rocky/Alma — dnf-automatic ===== -->
+
+      <custom_item>
+        type        : CMD_EXEC
+        description : "dnf-automatic package is installed"
+        cmd         : "rpm -q --quiet dnf-automatic && echo PKG_PRESENT || echo PKG_ABSENT"
+        expect      : "PKG_PRESENT"
+      </custom_item>
+
+      <custom_item>
+        type        : CMD_EXEC
+        description : "dnf-automatic is configured to apply updates (not just download/notify)"
+        info        : "Confere /etc/dnf/automatic.conf -- precisa ter apply_updates = yes."
+        cmd         : "cat /etc/dnf/automatic.conf 2>/dev/null"
+        regex       : "^\\s*apply_updates\\s*="
+        expect      : "apply_updates = yes"
+      </custom_item>
+
+      <custom_item>
+        type        : CMD_EXEC
+        description : "A dnf-automatic timer that installs updates is enabled"
+        info        : "Aceita dnf-automatic-install.timer OU dnf-automatic.timer habilitada (varia por distro/instalacao -- visto em teste real em 2026-11-06 no host host-rocky-teste (Rocky 8.9): -install.timer veio disabled, mas a generica dnf-automatic.timer veio enabled, cobrindo o apply_updates=yes ja checado no item anterior)."
+        cmd         : "if systemctl is-enabled dnf-automatic-install.timer 2>/dev/null | grep -qx enabled || systemctl is-enabled dnf-automatic.timer 2>/dev/null | grep -qx enabled; then echo TIMER_ENABLED; else echo TIMER_NOT_ENABLED; fi"
+        expect      : "TIMER_ENABLED"
+      </custom_item>
+
+      <custom_item>
+        type        : CMD_EXEC
+        description : "A dnf-automatic timer that installs updates is active"
+        info        : "Mesmo match exato (grep -qx) do bloco Debian -- 'inactive' contem 'active' como substring, um expect por substring daria falso positivo com o timer errado inativo."
+        cmd         : "if systemctl is-active dnf-automatic-install.timer 2>/dev/null | grep -qx active || systemctl is-active dnf-automatic.timer 2>/dev/null | grep -qx active; then echo TIMER_ACTIVE; else echo TIMER_NOT_ACTIVE; fi"
+        expect      : "TIMER_ACTIVE"
+      </custom_item>
+
+      <custom_item>
+        type        : CMD_EXEC
+        description : "dnf-automatic actually ran in the last 30 days"
+        info        : "ATENCAO: se o journal for volatil ou tiver retencao curta, este item pode dar falso negativo -- conferir /etc/systemd/journald.conf se bater FAILED aqui com os demais passando."
+        cmd         : "test \"$(journalctl -u dnf-automatic-install.service -u dnf-automatic.service --since '-30 days' --no-pager 2>/dev/null | wc -l)\" -gt 0 && echo RECENT_RUN_FOUND || echo NO_RECENT_RUN"
+        expect      : "RECENT_RUN_FOUND"
+      </custom_item>
+    </else>
+    </if>
+  </then>
+
+  <else>
+    <report type:"WARNING">
+    description : "Unattended-upgrade check: SO do host nao foi reconhecido como Debian/Ubuntu nem RHEL/CentOS -- este audit nao se aplica (ou a deteccao via /etc/os-release e /etc/redhat-release falhou)."
+    </report>
+  </else>
+  </if>
+</else>
+</if>
+
+</group_policy>
+</check_type>
