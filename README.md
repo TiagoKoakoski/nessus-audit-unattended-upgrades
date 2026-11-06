@@ -120,6 +120,35 @@ mas vale testar se ainda existir algum RHEL7/CentOS7 no ambiente.
 
 ## Versão plugin NASL (aparece em Vulnerabilities, não em Compliance)
 
+### ⏸️ PARADO — "0 total Plugins found" mesmo com tudo correto (2026-11-06)
+
+Testado de verdade contra o Tenable.sc de produção (versão **6.4.5**,
+Build `20240829180641`) e o upload nunca registra o plugin, mesmo
+depois de esgotar toda causa documentável:
+
+- Formato do pacote (`custom_feed_info.inc` + `custom_nasl_archive.tar.gz`
+  aninhado) confirmado contra a doc oficial em 3 versões diferentes.
+- Família `General` confirmada como existente nesse ambiente (via
+  filtro "Plugin Family" na tela de Plugins).
+- Scanners managed saudáveis (`WORKING`, tipo "Nessus (Managed
+  Plugins)") — não é problema de scanner linked/indisponível.
+- Nenhum conflito de Plugin ID (900001/900002 não existiam no feed).
+- Estrutura comparada **linha a linha com um plugin real e funcional
+  do próprio Tenable** (fornecido pelo usuário, CVE-2026-97986) —
+  adicionado `script_end_attributes()` (que faltava) e trocado
+  `ssh_get_info.nasl` por `ssh_get_info2.nasl` — **mesmo assim
+  continuou "0 total Plugins found"**.
+
+Job IDs testados, pra referência num chamado de suporte Tenable:
+`#173594823`, `#173594869`, `#173595226`, `#173595227`, `#173595311`.
+
+**Conclusão**: não parece mais ser erro no `.nasl` em si — é
+provavelmente algo específico dessa instalação/build (6.4.5 já está
+fora do ciclo de suporte documentado pela Tenable). Decisão em
+2026-11-06: **pausar esse caminho** e usar o `.audit` (seção acima,
+já validado e funcionando) enquanto isso. Se/quando abrir chamado no
+suporte Tenable, usar a evidência acima como ponto de partida.
+
 Arquivo: `unattended_upgrades_plugin.nasl` (mesma lógica do `.audit`,
 incluindo as duas correções reais encontradas — ver seção acima).
 Criado porque o requisito mudou: precisa aparecer junto com as
