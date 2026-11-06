@@ -1,3 +1,5 @@
+#%NASL_MIN_LEVEL 80900
+
 include("compat.inc");
 
 if (description)
@@ -11,6 +13,7 @@ if (description)
   script_set_attribute(attribute:"description", value:"Minimal plugin used only to validate that the custom NASL upload pipeline accepts and registers a plugin.");
   script_set_attribute(attribute:"solution", value:"N/A - test plugin, safe to remove.");
   script_set_attribute(attribute:"risk_factor", value:"None");
+  script_end_attributes();
 
   script_category(ACT_GATHER_INFO);
   script_family(english:"General");

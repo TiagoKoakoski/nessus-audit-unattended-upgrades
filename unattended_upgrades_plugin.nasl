@@ -20,6 +20,8 @@
 # proprio Tenable.sc se ha orientacao especifica de faixa antes de subir.
 #
 
+#%NASL_MIN_LEVEL 80900
+
 include("compat.inc");
 
 if (description)
@@ -46,12 +48,13 @@ it is configured to actually apply updates (not just download/notify),
 and confirm via logs/journal that it has run recently.");
   script_set_attribute(attribute:"risk_factor", value:"Medium");
   script_set_attribute(attribute:"plugin_type", value:"local");
+  script_end_attributes();
 
   script_category(ACT_GATHER_INFO);
   script_family(english:"General");
   script_copyright(english:"Copyright (C) 2026 Internal");
 
-  script_dependencies("ssh_get_info.nasl");
+  script_dependencies("ssh_get_info2.nasl");
   script_require_keys("Host/local_checks_enabled");
 
   exit(0);
