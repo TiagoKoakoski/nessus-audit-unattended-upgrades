@@ -1,12 +1,41 @@
 # Audit de compliance — Unattended Upgrades (Tenable.sc / Nessus)
 
-Arquivo `.audit` que detecta automaticamente o SO do host (Debian/Ubuntu
-ou RHEL/CentOS, e dentro de RHEL distingue EL7 legado de EL8+) e verifica
-se as atualizações automáticas de segurança (`unattended-upgrades`,
-`dnf-automatic` ou `yum-cron`, conforme o caso) estão instaladas,
-configuradas e **de fato rodando** — não só habilitadas.
+## ⚠️ Status atual (2026-11-06): usar os 3 arquivos separados, não o combinado
 
-**Arquivo**: `unattended_upgrades_combined.audit` (nesta mesma pasta).
+Testado de verdade contra scan real nesse Tenable.sc (versão 6.4.5), o
+arquivo único com detecção automática de SO (`unattended_upgrades_combined.audit`)
+bateu em limitações reais da engine dessa instalação: primeiro um erro
+de parsing na tag `<group_policy:...>` (removida), depois nos
+comentários `<!-- -->` (removidos), e por fim **"Unrecognized grammar"
+na própria sintaxe `<if>/<condition>/<then>/<else>`** — que a doc
+oficial documenta, mas essa engine aparentemente não suporta (ou tem
+um bug nela).
+
+**Use em vez disso os 3 arquivos separados por SO**, sem lógica
+condicional nenhuma (só lista sequencial de `custom_item`, formato que
+sabemos que essa engine aceita):
+
+- `unattended_upgrades_debian.audit` — Debian/Ubuntu.
+- `unattended_upgrades_el7_yumcron.audit` — RHEL/CentOS 7 (legado).
+- `unattended_upgrades_el8plus_dnfautomatic.audit` — RHEL/CentOS 8+/Rocky/Alma/Stream.
+
+Como não tem mais detecção automática de SO, anexa o arquivo certo na
+policy/scan de cada grupo de hosts (ou os três na mesma policy, se o
+scan for só contra hosts do SO certo — rodar o arquivo errado no SO
+errado só vai dar FAILED nos itens de pacote, não quebra nada, mas
+polui o relatório).
+
+`unattended_upgrades_combined.audit` continua no repo só como
+referência histórica de como a detecção automática *deveria* funcionar
+(e pode voltar a ser útil se/quando o suporte Tenable confirmar que é
+um bug corrigido em versão mais nova do SC).
+
+---
+
+Arquivo `.audit` que verifica se as atualizações automáticas de
+segurança (`unattended-upgrades`, `dnf-automatic` ou `yum-cron`,
+conforme o SO) estão instaladas, configuradas e **de fato rodando** —
+não só habilitadas.
 
 ## O que cada bloco verifica
 

@@ -1,0 +1,44 @@
+<check_type: "Unix" version:"2">
+
+<custom_item>
+  type        : CMD_EXEC
+  description : "dnf-automatic package is installed"
+  info        : "RHEL/CentOS 8+/Stream/Rocky/Alma -- em EL7 o pacote nao existe, usa yum-cron (ver unattended_upgrades_el7_yumcron.audit)."
+  cmd         : "rpm -q --quiet dnf-automatic && echo PKG_PRESENT || echo PKG_ABSENT"
+  expect      : "PKG_PRESENT"
+</custom_item>
+
+<custom_item>
+  type        : CMD_EXEC
+  description : "dnf-automatic is configured to apply updates (not just download/notify)"
+  info        : "Confere /etc/dnf/automatic.conf -- precisa ter apply_updates = yes."
+  cmd         : "cat /etc/dnf/automatic.conf 2>/dev/null"
+  regex       : "^\\s*apply_updates\\s*="
+  expect      : "apply_updates = yes"
+</custom_item>
+
+<custom_item>
+  type        : CMD_EXEC
+  description : "A dnf-automatic timer that installs updates is enabled"
+  info        : "Aceita dnf-automatic-install.timer OU dnf-automatic.timer habilitada (varia por distro/instalacao -- visto em teste real em 2026-11-06 no host host-rocky-teste (Rocky 8.9): -install.timer veio disabled, mas a generica dnf-automatic.timer veio enabled, cobrindo o apply_updates=yes ja checado no item anterior)."
+  cmd         : "if systemctl is-enabled dnf-automatic-install.timer 2>/dev/null | grep -qx enabled || systemctl is-enabled dnf-automatic.timer 2>/dev/null | grep -qx enabled; then echo TIMER_ENABLED; else echo TIMER_NOT_ENABLED; fi"
+  expect      : "TIMER_ENABLED"
+</custom_item>
+
+<custom_item>
+  type        : CMD_EXEC
+  description : "A dnf-automatic timer that installs updates is active"
+  info        : "Mesmo match exato (grep -qx) do bloco Debian -- 'inactive' contem 'active' como substring, um expect por substring daria falso positivo com o timer errado inativo."
+  cmd         : "if systemctl is-active dnf-automatic-install.timer 2>/dev/null | grep -qx active || systemctl is-active dnf-automatic.timer 2>/dev/null | grep -qx active; then echo TIMER_ACTIVE; else echo TIMER_NOT_ACTIVE; fi"
+  expect      : "TIMER_ACTIVE"
+</custom_item>
+
+<custom_item>
+  type        : CMD_EXEC
+  description : "dnf-automatic actually ran in the last 30 days"
+  info        : "ATENCAO: se o journal for volatil ou tiver retencao curta, este item pode dar falso negativo -- conferir /etc/systemd/journald.conf se bater FAILED aqui com os demais passando."
+  cmd         : "test \"$(journalctl -u dnf-automatic-install.service -u dnf-automatic.service --since '-30 days' --no-pager 2>/dev/null | wc -l)\" -gt 0 && echo RECENT_RUN_FOUND || echo NO_RECENT_RUN"
+  expect      : "RECENT_RUN_FOUND"
+</custom_item>
+
+</check_type>

@@ -1,0 +1,43 @@
+<check_type: "Unix" version:"2">
+
+<custom_item>
+  type        : CMD_EXEC
+  description : "unattended-upgrades package is installed"
+  info        : "Verifica se o pacote unattended-upgrades esta instalado via dpkg."
+  cmd         : "dpkg-query -W -f='${Status}\n' unattended-upgrades 2>/dev/null"
+  expect      : "install ok installed"
+</custom_item>
+
+<custom_item>
+  type        : CMD_EXEC
+  description : "Automatic unattended upgrades are enabled in APT periodic config"
+  info        : "Confere /etc/apt/apt.conf.d/20auto-upgrades -- precisa ter APT::Periodic::Unattended-Upgrade com valor \"1\" (um numero de dias, == habilitado todo dia) ou \"always\" (valor aceito em versoes mais novas do unattended-upgrades, visto em teste real em 2026-11-06 no host host-debian-teste -- \"0\" desabilita)."
+  cmd         : "cat /etc/apt/apt.conf.d/20auto-upgrades 2>/dev/null"
+  regex       : "APT::Periodic::Unattended-Upgrade"
+  expect      : "\"1\";|\"always\";"
+</custom_item>
+
+<custom_item>
+  type        : CMD_EXEC
+  description : "apt-daily-upgrade.timer is enabled"
+  cmd         : "if systemctl is-enabled apt-daily-upgrade.timer 2>/dev/null | grep -qx enabled; then echo TIMER_ENABLED; else echo TIMER_NOT_ENABLED; fi"
+  expect      : "TIMER_ENABLED"
+</custom_item>
+
+<custom_item>
+  type        : CMD_EXEC
+  description : "apt-daily-upgrade.timer is active"
+  info        : "Usa 'grep -qx active' (match exato da linha) em vez de so procurar a palavra 'active' na saida -- 'inactive' CONTEM 'active' como substring, entao um expect ingenuo dava PASSED errado mesmo com o timer inativo (achado em teste real em 2026-11-06, host host-rocky-teste, comparando com o resultado do dnf-automatic-install.timer)."
+  cmd         : "if systemctl is-active apt-daily-upgrade.timer 2>/dev/null | grep -qx active; then echo TIMER_ACTIVE; else echo TIMER_NOT_ACTIVE; fi"
+  expect      : "TIMER_ACTIVE"
+</custom_item>
+
+<custom_item>
+  type        : CMD_EXEC
+  description : "unattended-upgrades actually ran in the last 30 days"
+  info        : "Evidencia real de execucao, nao so configuracao."
+  cmd         : "find /var/log/unattended-upgrades/unattended-upgrades.log -mtime -30 2>/dev/null"
+  expect      : "unattended-upgrades.log"
+</custom_item>
+
+</check_type>

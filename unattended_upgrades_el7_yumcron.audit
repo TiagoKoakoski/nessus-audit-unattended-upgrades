@@ -1,0 +1,35 @@
+<check_type: "Unix" version:"2">
+
+<custom_item>
+  type        : CMD_EXEC
+  description : "yum-cron package is installed"
+  info        : "RHEL/CentOS 7 legado -- em EL8+ o pacote nao existe, usa dnf-automatic (ver unattended_upgrades_el8plus_dnfautomatic.audit)."
+  cmd         : "rpm -q --quiet yum-cron && echo PKG_PRESENT || echo PKG_ABSENT"
+  expect      : "PKG_PRESENT"
+</custom_item>
+
+<custom_item>
+  type        : CMD_EXEC
+  description : "yum-cron is configured to download AND apply updates"
+  info        : "Confere /etc/yum/yum-cron.conf -- precisa ter download_updates = yes e apply_updates = yes."
+  cmd         : "cat /etc/yum/yum-cron.conf 2>/dev/null"
+  regex       : "^\\s*(download_updates|apply_updates)\\s*="
+  expect      : "download_updates = yes|apply_updates = yes"
+  match_all   : YES
+</custom_item>
+
+<custom_item>
+  type        : CMD_EXEC
+  description : "yum-cron is enabled to run (service or cron script)"
+  cmd         : "if systemctl is-enabled yum-cron 2>/dev/null | grep -qx enabled; then echo YUMCRON_ENABLED; elif test -x /etc/cron.daily/0yum-daily.cron; then echo YUMCRON_ENABLED; else echo YUMCRON_NOT_ENABLED; fi"
+  expect      : "YUMCRON_ENABLED"
+</custom_item>
+
+<custom_item>
+  type        : CMD_EXEC
+  description : "yum-cron actually ran in the last 30 days"
+  cmd         : "test \"$(journalctl -u yum-cron --since '-30 days' --no-pager 2>/dev/null | wc -l)\" -gt 0 && echo RECENT_RUN_FOUND || echo NO_RECENT_RUN"
+  expect      : "RECENT_RUN_FOUND"
+</custom_item>
+
+</check_type>
