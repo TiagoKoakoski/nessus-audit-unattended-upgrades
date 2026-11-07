@@ -27,8 +27,9 @@ include("compat.inc");
 if (description)
 {
   script_id(900001);
+  script_oid("1.3.6.1.4.1.25623.1.0.900001");
   script_version("1.0");
-  script_name(english:"Unattended Upgrades Not Installed/Configured/Running");
+  script_name("Unattended Upgrades Not Installed/Configured/Running", english:"Unattended Upgrades Not Installed/Configured/Running");
   script_summary(english:"Checks if automatic OS security updates are installed, configured and actively running (unattended-upgrades / dnf-automatic / yum-cron)");
 
   script_set_attribute(attribute:"synopsis", value:"The remote host may not be receiving automatic security updates.");
@@ -51,7 +52,7 @@ and confirm via logs/journal that it has run recently.");
   script_end_attributes();
 
   script_category(ACT_GATHER_INFO);
-  script_family(english:"General");
+  script_family("General", english:"General");
   script_copyright(english:"Copyright (C) 2026 Internal");
 
   script_dependencies("ssh_get_info2.nasl");

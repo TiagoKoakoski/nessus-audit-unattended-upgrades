@@ -5,8 +5,9 @@ include("compat.inc");
 if (description)
 {
   script_id(900002);
+  script_oid("1.3.6.1.4.1.25623.1.0.900002");
   script_version("1.0");
-  script_name(english:"Custom Plugin Pipeline Test");
+  script_name("Custom Plugin Pipeline Test", english:"Custom Plugin Pipeline Test");
   script_summary(english:"Minimal test plugin to validate the custom plugin upload pipeline");
 
   script_set_attribute(attribute:"synopsis", value:"Test plugin, no real check.");
@@ -16,7 +17,7 @@ if (description)
   script_end_attributes();
 
   script_category(ACT_GATHER_INFO);
-  script_family(english:"General");
+  script_family("General", english:"General");
   script_copyright(english:"Copyright (C) 2026 Internal");
 
   exit(0);

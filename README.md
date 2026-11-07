@@ -193,9 +193,64 @@ repositório.
 Isso é um candidato real pra causa do "0 total Plugins found" descrito
 abaixo — um erro de sintaxe NASL pode muito bem falhar silenciosamente
 no upload do Tenable sem aparecer como mensagem explícita (diferente do
-`.audit`, que sempre mostrou o erro de parsing na tela). **Vale testar
-de novo no Tenable antes de considerar esse caminho definitivamente
-morto.**
+`.audit`, que sempre mostrou o erro de parsing na tela).
+
+**Testado de novo no Tenable mesmo assim: continuou "0 total Plugins
+found"** — então as aspas escapadas eram um bug real, mas não a causa
+do registro falhar.
+
+### ✅ Atualização (2026-11-07, parte 2): reproduzido localmente e corrigido
+
+Fui além do lint e usei o `openvas` (binário principal do
+`openvas-scanner`, não só o `-lint`) com `-u`/`--update-vt-info`, que é
+o mecanismo real de **registro** de plugin num cache (redis) — o
+equivalente local ao que o Tenable faz ao processar o upload. Script
+pronto: `./tools/test-nasl-registration.sh` (sobe um redis-server
+descartável, próprio do usuário, sem precisar de systemd/sudo, registra
+os `.nasl` do repo nele e mostra o que foi cacheado).
+
+Primeiro teste reproduziu o sintoma exato do Tenable: o plugin passava
+no lint (sintaxe OK) mas **não aparecia no cache** (`DBSIZE` não subia),
+com o log mostrando o motivo real: `Missing OID`. Analisando o código
+fonte do `openvas-scanner` (`src/nasl_plugins.c`, função `check_nvti`),
+um NVT só é aceito no cache se tiver **OID, name e family preenchidos**
+— faltando qualquer um dos três, ele é descartado silenciosamente (só
+um `WARNING` no log, nunca um erro que pare o processo).
+
+Três causas encontradas, uma de cada vez (cada fix revelava a próxima):
+
+1. **Faltava `script_oid(...)`** — só tínhamos `script_id(900001)`
+   (numérico, convenção clássica Nessus). Adicionado
+   `script_oid("1.3.6.1.4.1.25623.1.0.900001")` logo depois.
+2. **`script_name(english:"...")` não populava o nome** — o código fonte
+   (`nasl_scanner_glue.c`) mostra que essa função lê só o argumento
+   **posicional** (`get_str_var_by_num(lexic, 0)`), ignorando o nomeado
+   `english:`. Isso contradiz o estilo do plugin real do Tenable que
+   usamos como referência (que só usava `english:`) — então, em vez de
+   trocar o estilo, passei os **dois juntos**:
+   `script_name("Titulo", english:"Titulo")`. Não quebra o que já era
+   compatível com o Tenable, só adiciona o que esse engine local exige.
+3. **Mesmo problema em `script_family(english:"General")`** — mesmo
+   fix: `script_family("General", english:"General")`.
+
+Depois dos três fixes, `unattended_upgrades_plugin.nasl` (e
+`test_minimal_plugin.nasl`) **registram de verdade** no cache local
+(`nvt:1.3.6.1.4.1.25623.1.0.900001` aparece com filename, require_keys
+e dependências corretas) — primeiro "sucesso local completo" desde que
+esse caminho começou.
+
+**Ressalva importante**: o `openvas-scanner` é o fork **Greenbone**
+(open-source, atualmente mantido) do NASL original da Tenable — não é
+o mesmo software/engine que roda dentro do Tenable.sc (que é
+proprietário, fechado, e nessa instalação está numa versão antiga,
+6.4.5). `script_oid()` é seguro de adicionar (aditivo, não quebra nada
+documentado do Tenable). Já o motivo exato de `script_name`/
+`script_family` lidos como posicional é uma particularidade **desse**
+engine local — mantive o estilo `english:` (comprovadamente aceito pelo
+Tenable) e só **somei** o posicional, para não arriscar regressão.
+**Ainda não testado no Tenable real** — é a próxima validação pendente.
+
+`upload_this.tar.gz` foi reconstruído com essa versão corrigida.
 
 Nota: o pacote AUR buildou mas não terminou de instalar via `pacman -U`
 (parou no `sudo`, mesmo problema de TTY interativo já documentado
