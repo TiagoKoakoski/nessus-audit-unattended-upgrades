@@ -172,6 +172,37 @@ mas vale testar se ainda existir algum RHEL7/CentOS7 no ambiente.
 
 ## Versão plugin NASL (aparece em Vulnerabilities, não em Compliance)
 
+### 🔎 Atualização (2026-11-07): achado um bug real via lint local — vale retestar
+
+Instalado `openvas-scanner` (AUR, via `yay`) localmente — tem o binário
+`openvas-nasl-lint`, que valida sintaxe/símbolos NASL sem precisar do
+Tenable. Script pronto: `./tools/lint-nasl.sh` (lê os stubs em
+`tools/nasl_lint_stubs/`, que simulam o `compat.inc` real do feed
+Greenbone, indisponível standalone — só define os símbolos legados que
+os plugins daqui realmente usam: `script_id`, `script_summary`,
+`script_set_attribute`, `script_end_attributes`, `ssh_open_connection`,
+`ssh_close_connection`, `ssh_cmd`, `security_report_v4`).
+
+**Achado real**: `unattended_upgrades_plugin.nasl` tinha o mesmo bug de
+aspas escapadas (`\"$(...)\"`) já corrigido no `.audit` — nas linhas
+134 e 158 (checks "rodou nos últimos 30 dias" do yum-cron/dnf-automatic).
+Corrigido pra `| grep -q .` em vez de `test \"$(...)\" -gt 0`. Depois
+da correção, `openvas-nasl-lint` dá **0 erros** nos dois `.nasl` do
+repositório.
+
+Isso é um candidato real pra causa do "0 total Plugins found" descrito
+abaixo — um erro de sintaxe NASL pode muito bem falhar silenciosamente
+no upload do Tenable sem aparecer como mensagem explícita (diferente do
+`.audit`, que sempre mostrou o erro de parsing na tela). **Vale testar
+de novo no Tenable antes de considerar esse caminho definitivamente
+morto.**
+
+Nota: o pacote AUR buildou mas não terminou de instalar via `pacman -U`
+(parou no `sudo`, mesmo problema de TTY interativo já documentado
+nesta sessão) — os binários funcionam direto da pasta de build do yay
+(`~/.cache/yay/openvas-scanner/src/build/nasl/`), o script já aponta
+pra lá.
+
 ### ⏸️ PARADO — "0 total Plugins found" mesmo com tudo correto (2026-11-06)
 
 Testado de verdade contra o Tenable.sc de produção (versão **6.4.5**,
