@@ -1,0 +1,10 @@
+<check_type: "Unix" version:"2">
+
+<custom_item>
+  type        : CMD_EXEC
+  description : "test item"
+  cmd         : "echo hello"
+  expect      : "hello"
+</custom_item>
+
+</check_type>
