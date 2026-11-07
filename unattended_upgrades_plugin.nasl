@@ -131,7 +131,7 @@ else
       if ("YUMCRON_ENABLED" >!< yumcron_enabled)
         findings = make_list(findings, "yum-cron is not enabled to run (neither systemd service nor /etc/cron.daily/0yum-daily.cron)");
 
-      yumcron_recent = run(cmd:"test \"$(journalctl -u yum-cron --since '-30 days' --no-pager 2>/dev/null | wc -l)\" -gt 0 && echo RECENT_RUN_FOUND || echo NO_RECENT_RUN");
+      yumcron_recent = run(cmd:"journalctl -u yum-cron --since '-30 days' --no-pager 2>/dev/null | grep -q . && echo RECENT_RUN_FOUND || echo NO_RECENT_RUN");
       if ("RECENT_RUN_FOUND" >!< yumcron_recent)
         findings = make_list(findings, "No evidence yum-cron actually ran in the last 30 days");
     }
@@ -155,7 +155,7 @@ else
       if ("TIMER_ACTIVE" >!< dnf_timer_active)
         findings = make_list(findings, "Neither dnf-automatic-install.timer nor dnf-automatic.timer is active");
 
-      dnf_recent = run(cmd:"test \"$(journalctl -u dnf-automatic-install.service -u dnf-automatic.service --since '-30 days' --no-pager 2>/dev/null | wc -l)\" -gt 0 && echo RECENT_RUN_FOUND || echo NO_RECENT_RUN");
+      dnf_recent = run(cmd:"journalctl -u dnf-automatic-install.service -u dnf-automatic.service --since '-30 days' --no-pager 2>/dev/null | grep -q . && echo RECENT_RUN_FOUND || echo NO_RECENT_RUN");
       if ("RECENT_RUN_FOUND" >!< dnf_recent)
         findings = make_list(findings, "No evidence dnf-automatic actually ran in the last 30 days (check journald retention if everything else passes)");
     }
